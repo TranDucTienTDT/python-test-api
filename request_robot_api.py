@@ -26,8 +26,10 @@ class Auth(object):
 
         return value
 
+
 class RobotAPI(object):
-    def __init__(self, robotId, secretKey):
+    def __init__(self, name, robotId, secretKey):
+        self.name = name
         self.robotId = robotId
         self.secretKey = secretKey
 
@@ -79,8 +81,8 @@ class RobotAPI(object):
             'X-Ciraas-Token': token
         }
         req = requests.post(
-                f'{endpoint_url}/robot',
-                headers=header)
+            f'{endpoint_url}/robot',
+            headers=header)
         if req.status_code != 201:
             raise Exception(f"Not created.({req.status_code})")
 
@@ -99,8 +101,8 @@ class RobotAPI(object):
             'X-Ciraas-Token': token
         }
         req = requests.get(
-                f'{endpoint_url}/robot',
-                headers=header)
+            f'{endpoint_url}/robot',
+            headers=header)
         if req.status_code != 200:
             raise Exception(f"Not created.({req.status_code})")
 
@@ -110,7 +112,6 @@ class RobotAPI(object):
         }
 
         return value
-
 
     @staticmethod
     def api_get_single_robot_info(apikey, token, robotId, endpoint_url):
@@ -148,13 +149,32 @@ def get_apikey_token():
 
 
 def exec_stop(id):
-
     auth = get_apikey_token()
     robotId = id
     endpoint_url = 'https://api.t360.raasdev.io'
 
     result = RobotAPI.api_stop(auth.apiKey, auth.token, robotId, endpoint_url)['Status']
     return result
+
+
+def get_robot_name_from_file(name):
+    file_str = []
+
+    f = open(name, "rt")
+
+    for x in f:
+        y = x.rstrip('\n').rstrip(",").strip('"')
+        file_str.append(y)
+
+    f.close()
+
+    a = file_str.index('robot_name_list = [') + 1
+    b = file_str.index('robot_id_list = [') - 1
+    name_list = []
+    for index in range(a, b):
+        name_list.append(file_str[index])
+
+    return name_list
 
 
 def get_robot_id_from_file(name):
@@ -177,13 +197,61 @@ def get_robot_id_from_file(name):
     return id_list
 
 
+def get_robot_secret_key_from_file(name):
+    file_str = []
+
+    f = open(name, "rt")
+
+    for x in f:
+        y = x.rstrip('\n').rstrip(",").strip('"')
+        file_str.append(y)
+
+    f.close()
+
+    a = file_str.index('robot_secret_list = [') + 1
+    b = len(file_str) - 1
+    secret_key_list = []
+    for index in range(a, b):
+        secret_key_list.append(file_str[index])
+
+    return secret_key_list
+
+
+def get_robot_info_from_file(name):
+    file_str = []
+
+    f = open(name, "rt")
+
+    for x in f:
+        y = x.rstrip('\n').rstrip(",").strip('"')
+        file_str.append(y)
+
+    f.close()
+
+    a = file_str.index('robot_name_list = [')
+    b = file_str.index('robot_id_list = [')
+    c = file_str.index('robot_secret_list = [')
+    d = len(file_str)
+
+    robot_list = []
+    name_list = []
+    id_list = []
+    secret_key_list = []
+
 def main():
+    robot_name_list = get_robot_name_from_file("text.tfvars")
+    print(robot_name_list)
     robot_id_list = get_robot_id_from_file("text.tfvars")
     print(robot_id_list)
+    robot_secret_key_list = get_robot_secret_key_from_file("text.tfvars")
+    print(robot_secret_key_list)
     for robot_id in robot_id_list:
-        print (exec_stop(robot_id))
+        index = robot_id_list.index(robot_id)
+        print(f"Name: {robot_name_list[index]}")
+        print(f"Id: {robot_id_list[index]}")
+        print(f"Secret: {robot_secret_key_list[index]}")
+        print(exec_stop(robot_id))
 
 
 if __name__ == "__main__":
     main()
-
